@@ -42,13 +42,23 @@ def read_resultados(cfg):
 
 
 # Escreve o dataframe no arquivo csv no formato especificado
-def dataframe_to_csv(df, csv_filename):
-    # Create a new dataframe with the desired structure
-    new_df = pd.DataFrame()
-    new_df[df.columns[0]] = df[df.columns[0]]
-    new_df['List'] = df[df.columns[1:]].values.tolist()
-    # Write the new dataframe to a CSV file
-    new_df.to_csv(csv_filename, index=False,sep=';',header=False)
+def write_values_to_csv(values, filename):
+
+    with open(filename, 'w') as file:
+
+        for i in range(len(sorted_data)):
+            # Extract the first value
+            value1 = int(values.iloc[i][0])
+
+            # Extract the remaining values
+            value2 = int(values.iloc[i][1])
+            value3 = int(values.iloc[i][2])
+            value4 = values.iloc[i][3]
+
+            # Format the final string
+            formatted_str = f"{value1};[{value2},{value3},{value4}]"
+
+            file.write(formatted_str + '\n')
 
 
 # Lendo as bases
@@ -72,14 +82,14 @@ vectorizer = TfidfVectorizer(lowercase=False, vocabulary = modelo.columns, use_i
 querytfidf = vectorizer.fit_transform(corpus)
 feature_names = vectorizer.get_feature_names_out()
 corpus_index = [n for n in corpus]
-querymodel = pd.DataFrame(querytfidf.todense(), columns=feature_names, index = range(1,100))
+querymodel = pd.DataFrame(querytfidf.todense(), columns=feature_names, index = querys.QueryNumber)
 
 # Calculate cosine similarity
 similarity_matrix = cosine_similarity(querymodel.values, modelo.values)
 
 # Convert similarity matrix to DataFrame
 similarity_df = pd.DataFrame(similarity_matrix, columns=modelo.index, index=querymodel.index)
-similarity_df['QueryNumber'] = similarity_df.index
+similarity_df = similarity_df.reset_index()
 
 # Fazendo um pivoteamento no dataframe
 melted_df = similarity_df.melt(var_name = 'DocNumber', id_vars='QueryNumber', value_name='Distance')
@@ -96,7 +106,6 @@ sorted_data = melted_sorted.sort_values(['QueryNumber','Ranking','DocNumber','Di
 sorted_data = sorted_data[['QueryNumber','Ranking','DocNumber','Distance']]
 
 # Escrevendo os resultado em um csv
-dataframe_to_csv(sorted_data,read_resultados(cfg))
-
+write_values_to_csv(sorted_data,read_resultados(cfg))
 
 
